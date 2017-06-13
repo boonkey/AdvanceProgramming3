@@ -1,27 +1,36 @@
-#include "Game.h"
+#include "Board.h"
 
-Ship::Ship(char t, bool hor) :
+Ship::Ship(char t, DIRECTION direction):
 	type(t),
 	alive(true),
-	horizontal(hor)
+	dir(direction)
 	{}
 
 // returns true belongs to player A
 bool Ship::isSideA() { return IsCharUpperA(type) != 0; }
 
-void Ship::print() {
-	if (config.quiet)
-		return;
-	cout << "type: " << type << " alive: " << alive << " Side A: " << isSideA() << endl;
-	for (auto p : position) {
-		cout << p.first.first << " , " << p.first.second << " # status: " << p.second << endl;
-	}
+void Ship::setDirection(DIRECTION direction) {
+	dir = direction;
 }
 
+DIRECTION Ship::getDirection() {
+	return dir;
+}
+
+
+//void Ship::print() {
+//	if (config.quiet)
+//		return;
+//	cout << "type: " << type << " alive: " << alive << " Side A: " << isSideA() << endl;
+//	for (auto p : position) {
+//		cout << p.first.col << " , " << p.first.row << " , " << p.first.depth << " # status: " << p.second << endl;
+//	}
+//}
+
 //puts a ship in place (position is set to true position on board. initialized to all parts alive
-int Ship::putInPlace(vector<pair<int, int>> location) {
+int Ship::putInPlace(vector<Coordinate> location) {
 	for (auto p : location) {
-		pair <pair<int, int>, bool> temp = make_pair(p, true); //make the pair of position and alive
+		pair <Coordinate, bool> temp = make_pair(p, true); //make the pair of position and alive
 		position.insert(position.end(), 1, temp);				//insert this into the position
 	}
 	return 0;
@@ -37,9 +46,13 @@ bool Ship::checkAlive() {
 }
 
 //returns true iff attack hit the ship
-bool Ship::checkAttack(pair<int, int> location) {
-	for (int i = 0; i < position.size(); i++) {
-		if (location.first == position[i].first.first && location.second == position[i].first.second && position[i].second == true) {
+bool Ship::checkAttack(Coordinate location) {
+	for (unsigned int i = 0; i < position.size(); i++) {
+		if (location.col == position[i].first.col && 
+			location.row == position[i].first.row && 
+			location.depth == position[i].first.depth && 
+			position[i].second == true) {
+
 			position[i].second = false;
 			return true;
 		}
@@ -47,9 +60,11 @@ bool Ship::checkAttack(pair<int, int> location) {
 	return false;
 }
 
-bool Ship::checkLocation(pair<int, int> location) {
-	for (int i = 0; i < position.size(); i++) {
-		if (location.first == position[i].first.first && location.second == position[i].first.second) {
+bool Ship::checkLocation(Coordinate location) {
+	for (unsigned int i = 0; i < position.size(); i++) {
+		if (location.col == position[i].first.col &&
+			location.row == position[i].first.row &&
+			location.depth == position[i].first.depth){
 			return true;
 		}
 	}
@@ -71,7 +86,7 @@ int Ship::getShipScore() {
 	}
 	return 0;
 }
-
+/*
 //a ship constructor
 Ship shipScan(char value, bool vert, pair<int, int> topLeft, int shipLen, Board& gameBoard) {
 	Ship temp(value, vert);
@@ -187,3 +202,5 @@ int topLeftOfShip(Board &gameBoard, Board& intermediateBoard, int col, int row) 
 	}
 	return -1;
 }
+
+*/

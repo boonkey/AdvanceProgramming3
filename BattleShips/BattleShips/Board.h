@@ -1,28 +1,12 @@
 #pragma once
 #include "DataTypes.h"
 #include "IBattleshipGameAlgo.h"
-/*
-class Ship {
-	char type;			// ship type (letter) - indicates both size and side
-	vector<pair<pair<int, int>, bool>> position; //for each position we keep <<x,y>,alive>
-	bool alive;			// true iff ship is alive (not dead)
-	bool horizontal;	// true iff ship is horizontal
+#include "Ship.h"
 
-public:
-	//constructor
-	Ship(char t, bool hor);
-	bool isSideA();
-	void print();
-	int putInPlace(vector<pair<int, int>> location);
-	bool checkAlive();
-	bool checkAttack(pair<int, int> location);
-	bool checkLocation(pair<int, int> location);
-	int getShipScore();
-};
-*/
 class Board : public BoardData {
 private:
 	char ***board;
+	vector<Ship> ships;
 
 public:
 	Board(string filename);
@@ -35,6 +19,10 @@ public:
 		return board[loc.row - 1][loc.col - 1][loc.depth - 1];
 	}
 	void print();
-
+	const char*** Board::getSidedBoard(bool sideA);
+	const char*** Board::getFullBoard() { return const_cast<const char ***>(board); }
+	bool gameOver(bool sideA);
 };
 
+int pathExist(string pathname);
+vector<string> get_all_files_names_within_folder(string folder, string fileType);

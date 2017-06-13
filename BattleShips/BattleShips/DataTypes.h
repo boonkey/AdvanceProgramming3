@@ -19,6 +19,7 @@ using namespace std;
 
 #define BOARD_SIZE 10
 #define PRINT(loc) cout << "< " << loc.row << " , " << loc.col << " , " << loc.depth << "> " << endl
+
 //================== Error Code Definition ===========
 #define ERR_WRONG_NUM_OF_ARGS  -1
 #define ERR_TOO_MUCH_FILES     -2
@@ -44,6 +45,12 @@ struct Configuration{
 };
 
 extern struct Configuration config;
+
+enum DIRECTION {
+	X = 0, // Horizontal
+	Y = 1, // Vectral
+	Z = 2  // Inwards
+};
 
 enum COLOR
 {

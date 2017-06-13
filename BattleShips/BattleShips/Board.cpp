@@ -86,6 +86,40 @@ Board::Board(string filename) {
 	}
 }
 
+const char*** Board::getSidedBoard(bool sideA) {
+	char*** sidedBoard = new char**[_rows];
+	for (int i = 0; i < _rows; i++) {
+		sidedBoard[i] = new char*[_cols];
+		for (int j = 0; j < _cols; j++) {
+			sidedBoard[i][j] = new char[_depth];
+		}
+	}
+	//init to clear board
+	Coordinate i = Coordinate(0,0,0);
+	for (i.row = 0; i.row < _rows; ++i.row) {
+		for (i.col = 0; i.col < _cols; ++i.col) {
+			for (i.depth = 0; i.depth < _depth; ++i.depth) {
+				if (IsCharUpperA(charAt(i)) != 0 && sideA)
+					sidedBoard[i.row][i.col][i.depth] = charAt(i);
+				else if (IsCharLowerA(charAt(i)) != 0 && !sideA)
+					sidedBoard[i.row][i.col][i.depth] = charAt(i);
+				else
+					sidedBoard[i.row][i.col][i.depth] = ' ';
+			}
+		}
+	}
+	return const_cast<const char ***> (sidedBoard);
+}
+
+bool Board::gameOver(bool sideA) {
+	for (auto ship : ships) {
+		if ((ship.isSideA() == sideA) && ship.checkAlive())
+			return false;
+	}
+	return true;
+}
+
+
 
 
 // set works from 1!!!!!!!!
@@ -111,7 +145,52 @@ void Board::print() {
 }
 
 
+
+// ================ [Assisting Methods] ====================//
+
+int pathExist(string pathname) {
+	struct stat info;
+	if (stat(pathname.c_str(), &info) != 0)
+		return ERR_PATH_DOESNT_EXIST;
+	else if (info.st_mode & S_IFDIR)  // S_ISDIR() doesn't exist on my windows 
+		return 0;
+	else
+		return ERR_PATH_NOT_FOLDER;
+}
+
+vector<string> get_all_files_names_within_folder(string folder, string fileType) {
+	vector<string> names;
+	string search_path = folder + "/*." + fileType;
+	WIN32_FIND_DATAA fd;
+	HANDLE hFind = ::FindFirstFileA(search_path.c_str(), &fd);
+	if (hFind != INVALID_HANDLE_VALUE) {
+		do {
+			// read all (real) files in current folder
+			// , delete '!' read other 2 default folder . and ..
+			if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+				names.push_back(fd.cFileName);
+			}
+		} while (::FindNextFileA(hFind, &fd));
+		::FindClose(hFind);
+	}
+	return names;
+}
+
+
+
+
+
+
+
+
+
+
+
+
 int main() {
-	Board board = Board("E:\\AdvancedPrograming\\BattleShips\\test_files\\good_board.sboard");
+	string path = "E:\\AdvancedPrograming\\BattleShips\\test_files";
+	string boardpath = get_all_files_names_within_folder(path, "sboard")[2];
+	Board board = Board(path + "\\" + boardpath);
+
 	system("pause");
 }
