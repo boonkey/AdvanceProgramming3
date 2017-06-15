@@ -48,7 +48,6 @@ Board::Board(string filename) {
 				board[i][j] = new char[_depth];
 			}
 		}
-		cout << "Starting: " << endl;
 		loc.depth = 1;
 		getline(boardFile, line);
 		while (loc.depth <= _depth) {
@@ -78,7 +77,7 @@ Board::Board(string filename) {
 			loc.row = 1;
 			loc.depth++;
 		}
-		print();
+		//print();
 	}
 	else {
 		printf("Unable to open (file is close) %s\n ", filename.c_str());
@@ -86,29 +85,37 @@ Board::Board(string filename) {
 	}
 }
 
-const char*** Board::getSidedBoard(bool sideA) {
-	char*** sidedBoard = new char**[_rows];
+Board::Board(Board& origin) {
+	_rows = origin.rows();
+	_cols = origin.cols();
+	_depth = origin.depth();
+	board = new char**[_rows];
 	for (int i = 0; i < _rows; i++) {
-		sidedBoard[i] = new char*[_cols];
+		board[i] = new char*[_cols];
 		for (int j = 0; j < _cols; j++) {
-			sidedBoard[i][j] = new char[_depth];
+			board[i][j] = new char[_depth];
 		}
-	}
+	}	
+}
+
+ Board Board::getSidedBoard(bool sideA) {
+	Board sidedBoard = Board(*this);
 	//init to clear board
 	Coordinate i = Coordinate(0,0,0);
-	for (i.row = 0; i.row < _rows; ++i.row) {
-		for (i.col = 0; i.col < _cols; ++i.col) {
-			for (i.depth = 0; i.depth < _depth; ++i.depth) {
+	for (i.row = 1; i.row < _rows; ++i.row) {
+		for (i.col = 1; i.col < _cols; ++i.col) {
+			for (i.depth = 1; i.depth < _depth; ++i.depth) {
 				if (IsCharUpperA(charAt(i)) != 0 && sideA)
-					sidedBoard[i.row][i.col][i.depth] = charAt(i);
+					sidedBoard.set(i, charAt(i));
 				else if (IsCharLowerA(charAt(i)) != 0 && !sideA)
-					sidedBoard[i.row][i.col][i.depth] = charAt(i);
+					sidedBoard.set(i, charAt(i));
 				else
-					sidedBoard[i.row][i.col][i.depth] = ' ';
+					sidedBoard.set(i, ' ');
 			}
 		}
 	}
-	return const_cast<const char ***> (sidedBoard);
+	
+	return sidedBoard;
 }
 
 bool Board::gameOver(bool sideA) {
@@ -168,7 +175,7 @@ vector<string> get_all_files_names_within_folder(string folder, string fileType)
 			// read all (real) files in current folder
 			// , delete '!' read other 2 default folder . and ..
 			if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-				names.push_back(fd.cFileName);
+				names.push_back(folder + "\\" + fd.cFileName);
 			}
 		} while (::FindNextFileA(hFind, &fd));
 		::FindClose(hFind);
@@ -186,11 +193,11 @@ vector<string> get_all_files_names_within_folder(string folder, string fileType)
 
 
 
-
-int main() {
-	string path = "E:\\AdvancedPrograming\\BattleShips\\test_files";
-	string boardpath = get_all_files_names_within_folder(path, "sboard")[2];
-	Board board = Board(path + "\\" + boardpath);
-
-	system("pause");
-}
+//
+//int main() {
+//	string path = "E:\\AdvancedPrograming\\BattleShips\\test_files";
+//	string boardpath = get_all_files_names_within_folder(path, "sboard")[2];
+//	Board board = Board(path + "\\" + boardpath);
+//
+//	system("pause");
+//}

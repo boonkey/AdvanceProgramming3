@@ -15,6 +15,9 @@
 #include <stdio.h>
 #include <conio.h>
 #include <memory>
+#include <thread>
+#include <mutex>
+#include <atomic>
 using namespace std;
 
 #define BOARD_SIZE 10
@@ -25,7 +28,7 @@ using namespace std;
 #define ERR_TOO_MUCH_FILES     -2
 #define ERR_PATH_DOESNT_EXIST  -3
 #define ERR_PATH_NOT_FOLDER    -4
-#define ERR_NUM_OF_ATTACKA     -5
+#define ERR_NUM_OF_ALGO		   -5
 #define ERR_NUM_OF_ATTACKB     -6
 #define ERR_NUM_OF_BOARDS      -7
 #define ERR_MISSING_ATTACKA    -8
