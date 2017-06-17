@@ -21,4 +21,5 @@ public:
 	void setDirection(DIRECTION direction);
 	DIRECTION getDirection();
 	int getShipScore();
+	vector<pair<Coordinate, bool>> location();
 };

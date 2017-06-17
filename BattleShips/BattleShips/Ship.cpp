@@ -204,3 +204,8 @@ int topLeftOfShip(Board &gameBoard, Board& intermediateBoard, int col, int row) 
 }
 
 */
+
+
+vector<pair<Coordinate, bool>> Ship::location() {
+	return position;
+}

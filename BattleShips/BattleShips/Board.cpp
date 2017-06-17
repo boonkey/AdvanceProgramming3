@@ -36,16 +36,16 @@ Board::Board(string filename) {
 		getline(boardFile, line);
 		cout << line << endl;
 		sscanf_s(line.c_str(), "%dx%dx%d", &loc.col, &loc.row, &loc.depth);
-		PRINT(loc);
+		PRINT(loc) << endl;
 		_rows = loc.row;
 		_cols = loc.col;
 		_depth = loc.depth;
 
-		board = new char**[_rows];
+		board = new Cell**[_rows];
 		for (int i = 0; i < _rows; i++) {
-			board[i] = new char*[_cols];
+			board[i] = new Cell*[_cols];
 			for (int j = 0; j < _cols; j++) {
-				board[i][j] = new char[_depth];
+				board[i][j] = new Cell[_depth];
 			}
 		}
 		loc.depth = 1;
@@ -69,7 +69,7 @@ Board::Board(string filename) {
 						line[loc.col - 1] = ' ';
 						break;
 					}
-					set(loc, line[loc.col - 1]);
+					initSet(loc, line[loc.col - 1]);
 				}
 				loc.row++;
 			}
@@ -89,11 +89,11 @@ Board::Board(Board& origin) {
 	_rows = origin.rows();
 	_cols = origin.cols();
 	_depth = origin.depth();
-	board = new char**[_rows];
+	board = new Cell**[_rows];
 	for (int i = 0; i < _rows; i++) {
-		board[i] = new char*[_cols];
+		board[i] = new Cell*[_cols];
 		for (int j = 0; j < _cols; j++) {
-			board[i][j] = new char[_depth];
+			board[i][j] = new Cell[_depth];
 		}
 	}	
 }
@@ -131,23 +131,36 @@ bool Board::gameOver(bool sideA) {
 
 // set works from 1!!!!!!!!
 void Board::set(Coordinate loc, char type) {
-	board[loc.row - 1][loc.col - 1][loc.depth - 1] = type;
+	board[loc.row - 1][loc.col - 1][loc.depth - 1].value = type;
+}
+
+void Board::initSet(Coordinate loc, char type) {
+	board[loc.row - 1][loc.col - 1][loc.depth - 1].heatValues[XL] = loc.row;
+	board[loc.row - 1][loc.col - 1][loc.depth - 1].heatValues[XH] = rows() - loc.row + 1;
+	board[loc.row - 1][loc.col - 1][loc.depth - 1].heatValues[YL] = loc.col;
+	board[loc.row - 1][loc.col - 1][loc.depth - 1].heatValues[YH] = cols() - loc.col + 1;
+	board[loc.row - 1][loc.col - 1][loc.depth - 1].heatValues[ZL] = loc.depth;
+	board[loc.row - 1][loc.col - 1][loc.depth - 1].heatValues[ZH] = depth() - loc.depth + 1;
+	board[loc.row - 1][loc.col - 1][loc.depth - 1].value = type;
 }
 
 void Board::print() {
 	Coordinate loc = Coordinate(0, 0, 0);
 	for (loc.depth = 1; loc.depth <= depth(); loc.depth++) {
-		for (loc.row = 1; loc.row <= rows(); loc.row++) {
+		printf("depth: %d\n", loc.depth);
+		for (loc.row = 0; loc.row <= rows(); loc.row++) { //print line marks also
+			for (loc.col = 1; loc.col <= cols(); loc.col++)
+				printf("%c%c%c%c%c%c", char(178), char(178), char(178), char(178), char(178), char(178));
+			cout << char(178) << endl << char(178);
 			for (loc.col = 1; loc.col <= cols(); loc.col++) {
-				cout << charAt(loc) << char(176);
-			}
-			cout << endl;
-			for (loc.col = 1; loc.col <= cols(); loc.col++) {
-				cout << char(176) << char(176);
+				if (loc.row == 0)
+					printf(" %3d %c", loc.col, char(178));
+				else if (loc.row <= rows())
+					printf(" %3d %c", cellAt(loc)->score(), char(178));
 			}
 			cout << endl;
 		}
-		cout << endl;
+		cout <<endl;
 	}
 }
 
@@ -187,17 +200,80 @@ vector<string> get_all_files_names_within_folder(string folder, string fileType)
 
 
 
+// function returns true if coord is a legitimate position on board
+bool Board::CoordOnBoard(Coordinate coord) {
+	if (!(coord.row > 0 && coord.row < rows()))
+		return false;
+	if (!(coord.col > 0 && coord.col < cols()))
+		return false;
+	if (!(coord.depth > 0 && coord.depth < depth()))
+		return false;
+	return true;
+}
 
+Cell* Board::cellAt(Coordinate c) {
+	return &board[c.row - 1][c.col - 1][c.depth - 1];
+}
 
+void Board::kaboom(Coordinate loc) {
+	Coordinate i = Coordinate(1, 1, 1);
 
+	i.col = loc.col;
+	i.depth = loc.depth;
+	for (i.row=1; i.row <= rows(); i.row++) {
+		if (i.row < loc.row)
+			cellAt(i)->kaboom(XL,abs(i.row - loc.row));
+		else
+			cellAt(i)->kaboom(XH, abs(i.row - loc.row));
+	}
+	
+	i.row = loc.row;
+	i.depth = loc.depth;
+	for (i.col=1; i.col <= cols(); i.col++) {
+		if (i.col < loc.col)
+			cellAt(i)->kaboom(YL, abs(i.col - loc.col));
+		else
+			cellAt(i)->kaboom(YH, abs(i.col - loc.col));
+	}
 
+	i.col = loc.col;
+	i.row = loc.row;
+	for (i.depth=1; i.depth <= depth(); i.depth++) {
+		if (i.depth < loc.depth)
+			cellAt(i)->kaboom(ZL, abs(i.depth - loc.depth));
+		else
+			cellAt(i)->kaboom(ZH, abs(i.depth - loc.depth));
+	}
 
+	cellAt(loc)->kaboom(XL,0);
+	cellAt(loc)->kaboom(YL,0);
+	cellAt(loc)->kaboom(ZL,0);
+}
 
-//
-//int main() {
-//	string path = "E:\\AdvancedPrograming\\BattleShips\\test_files";
-//	string boardpath = get_all_files_names_within_folder(path, "sboard")[2];
-//	Board board = Board(path + "\\" + boardpath);
-//
-//	system("pause");
-//}
+void Board::kaboom(Ship ship) {
+	for (auto &m : ship.location()) {
+		Coordinate temp = m.first;
+		temp.row--;
+		if (CoordOnBoard(temp)) 
+			kaboom(temp);
+		temp.row += 2;
+		if (CoordOnBoard(temp))
+			kaboom(temp);
+		temp.row--;
+		temp.col--;
+		if (CoordOnBoard(temp))
+			kaboom(temp);
+		temp.col += 2;
+		if (CoordOnBoard(temp))
+			kaboom(temp);
+		temp.col--;
+		temp.depth--;
+		if (CoordOnBoard(temp))
+			kaboom(temp);
+		temp.depth += 2;
+		if (CoordOnBoard(temp))
+			kaboom(temp);
+		temp.depth--;
+	}
+}
+

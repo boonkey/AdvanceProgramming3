@@ -1,27 +1,29 @@
 #pragma once
 
+#include <atomic>
 #include <cerrno>
+#include <conio.h>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <cmath>
+#include <memory>
+#include <mutex>
 #include <regex>
+#include <stdio.h>
 #include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <thread>
 #include <utility> // for std::pair
 #include <vector>
 #include <Windows.h>
-#include <stdio.h>
-#include <conio.h>
-#include <memory>
-#include <thread>
-#include <mutex>
-#include <atomic>
+
 using namespace std;
 
 #define BOARD_SIZE 10
-#define PRINT(loc) cout << "< " << loc.row << " , " << loc.col << " , " << loc.depth << "> " << endl
+#define PRINT(loc) cout << "< " << loc.row << " , " << loc.col << " , " << loc.depth << "> "
 
 //================== Error Code Definition ===========
 #define ERR_WRONG_NUM_OF_ARGS  -1
@@ -73,4 +75,16 @@ enum COLOR
 	PURPLE = 13, PINK = 13, MAGENTA = 13,
 	YELLOW = 14,
 	WHITE = 15
+};
+
+enum HEATMODIFIER {
+	XL = 0,
+	XM = 1,
+	XH = 2,
+	YL = 3,
+	YM = 4,
+	YH = 5,
+	ZL = 6,
+	ZM = 7,
+	ZH = 8
 };

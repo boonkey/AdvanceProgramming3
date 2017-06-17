@@ -256,30 +256,42 @@ public:
 
 
 
-int main(int argc, char* argv[]) {
-	string path = ".";
-	int num_of_threads = 4;
-	for (int i = 1; i < argc; i++) {
-		if (!strcmp(argv[i], "--threads")) {
-			if (argc > i + 1) {
-				num_of_threads = atoi(argv[i + 1]);
-				i++;
-			}
-			else
-				return ERR_WRONG_NUM_OF_ARGS;
-		}
-		else
-			path = argv[i];
-	}
-	cout << path << endl;
-	system("pause");
+//int main(int argc, char* argv[]) {
+//	string path = ".";
+//	int num_of_threads = 4;
+//	for (int i = 1; i < argc; i++) {
+//		if (!strcmp(argv[i], "--threads")) {
+//			if (argc > i + 1) {
+//				num_of_threads = atoi(argv[i + 1]);
+//				i++;
+//			}
+//			else
+//				return ERR_WRONG_NUM_OF_ARGS;
+//		}
+//		else
+//			path = argv[i];
+//	}
+//	cout << path << endl;
+//	system("pause");
+//
+//	vector<string> algoPaths_ = get_all_files_names_within_folder(path, "dll");
+//	if (algoPaths_.size() < 3)
+//		return ERR_NUM_OF_ALGO;
+//	//TODO: send boards and not paths
+//	vector<string> boardPaths_ = get_all_files_names_within_folder(path, "sboard");
+//	ThreadManager tm( algoPaths_, boardPaths_,num_of_threads);
+//	tm.runThreads();	
+//	system("pause");
+//}
 
-	vector<string> algoPaths_ = get_all_files_names_within_folder(path, "dll");
-	if (algoPaths_.size() < 3)
-		return ERR_NUM_OF_ALGO;
-	//TODO: send boards and not paths
+
+int main() {
+	string path = "E:\\AdvancedPrograming\\Testing";
 	vector<string> boardPaths_ = get_all_files_names_within_folder(path, "sboard");
-	ThreadManager tm( algoPaths_, boardPaths_,num_of_threads);
-	tm.runThreads();	
+	cout << boardPaths_[0] << endl;
+	Board a = Board(boardPaths_[2]);
+	a.kaboom(Coordinate(5, 5, 3));
+	a.kaboom(Coordinate(5, 4, 2));
+	a.print();	
 	system("pause");
 }
