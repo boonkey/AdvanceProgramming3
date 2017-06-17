@@ -1,21 +1,20 @@
 #include "Match.h"
 
 //constr
-	Match::Match(string playerAPath,string playerBPath,string boardPath) : matchBoard(boardPath) {
-		//matchBoard = Board(boardPath);	//init the match board with the Board constructor
+	Match::Match(string playerAPath,string playerBPath,Board &board) : matchBoard(board){
+		//matchBoard = Board(board);	//init the match board with the Board constructor
 
-		if (!initplayer(playerAPath,true, matchBoard.getSidedBoard(true))) {
+		if (!initplayer(playerAPath,true, board.getSidedBoard(true))) {
 			playerA = NULL;
 		}
-		if (!initplayer(playerBPath, false, matchBoard.getSidedBoard(false))) {
+		if (!initplayer(playerBPath, false, board.getSidedBoard(false))) {
 			playerB = NULL;
 		}	
 	}
 
 //other functions
-	////TODO move this function to thread class
-	//pair<int, int> Match::run_thread_match(string playerAPath, string playerBPath, string boardPath) {
-	//	Match A(playerAPath, playerBPath, boardPath);
+	//pair<int, int> Match::run_thread_match(string playerAPath, string playerBPath, Board board) {
+	//	Match A(playerAPath, playerBPath, board);
 	//	return A.runMatch;
 	//}
 

@@ -34,9 +34,9 @@ Board::Board(string filename) {
 	ifstream boardFile(filename);
 	if (boardFile.is_open()) {
 		getline(boardFile, line);
-		cout << line << endl;
+		//cout << line << endl;
 		sscanf_s(line.c_str(), "%dx%dx%d", &loc.col, &loc.row, &loc.depth);
-		PRINT(loc) << endl;
+		//PRINT(loc) << endl;
 		_rows = loc.row;
 		_cols = loc.col;
 		_depth = loc.depth;
@@ -85,7 +85,7 @@ Board::Board(string filename) {
 	}
 }
 
-Board::Board(Board& origin) {
+Board::Board(Board const &origin) {
 	_rows = origin.rows();
 	_cols = origin.cols();
 	_depth = origin.depth();
@@ -96,6 +96,25 @@ Board::Board(Board& origin) {
 			board[i][j] = new Cell[_depth];
 		}
 	}	
+}
+
+void Board::operator=(Board const &x) {
+	_rows = x.rows();
+	_cols = x.cols();
+	_depth = x.depth();
+	board = new Cell**[_rows];
+	for (int i = 0; i < _rows; i++) {
+		board[i] = new Cell*[_cols];
+		for (int j = 0; j < _cols; j++) {
+			board[i][j] = new Cell[_depth];
+		}
+	}
+	ships = x.ships;
+	for (int i = 0; i < rows(); i++)
+		for (int j = 0; j < cols(); j++)
+			for (int k = 0; k < depth(); k++)
+				board[i][j][k] = x.board[i][j][k];
+
 }
 
  Board Board::getSidedBoard(bool sideA) {
@@ -135,13 +154,13 @@ void Board::set(Coordinate loc, char type) {
 }
 
 void Board::initSet(Coordinate loc, char type) {
-	board[loc.row - 1][loc.col - 1][loc.depth - 1].heatValues[XL] = loc.row;
-	board[loc.row - 1][loc.col - 1][loc.depth - 1].heatValues[XH] = rows() - loc.row + 1;
-	board[loc.row - 1][loc.col - 1][loc.depth - 1].heatValues[YL] = loc.col;
-	board[loc.row - 1][loc.col - 1][loc.depth - 1].heatValues[YH] = cols() - loc.col + 1;
-	board[loc.row - 1][loc.col - 1][loc.depth - 1].heatValues[ZL] = loc.depth;
-	board[loc.row - 1][loc.col - 1][loc.depth - 1].heatValues[ZH] = depth() - loc.depth + 1;
-	board[loc.row - 1][loc.col - 1][loc.depth - 1].value = type;
+	cellAt(loc)->heatValues[XL] = loc.row;
+	cellAt(loc)->heatValues[XH] = rows() - loc.row + 1;
+	cellAt(loc)->heatValues[YL] = loc.col;
+	cellAt(loc)->heatValues[YH] = cols() - loc.col + 1;
+	cellAt(loc)->heatValues[ZL] = loc.depth;
+	cellAt(loc)->heatValues[ZH] = depth() - loc.depth + 1;
+	cellAt(loc)->value = type;
 }
 
 void Board::print() {
@@ -164,6 +183,15 @@ void Board::print() {
 	}
 }
 
+char Board::charAt(Coordinate c) const { //return ' ' for non exist coords
+	if (!(c.row > 0 && c.row < rows()))
+		return ' ';
+	if (!(c.col > 0 && c.col < cols()))
+		return ' ';
+	if (!(c.depth > 0 && c.depth < depth()))
+		return ' ';
+	return board[c.row - 1][c.col - 1][c.depth - 1].value;
+}
 
 
 // ================ [Assisting Methods] ====================//

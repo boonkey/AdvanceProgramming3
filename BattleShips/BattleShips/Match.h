@@ -1,7 +1,4 @@
 #pragma once
-
-//#include "Board.h"	# TODO : replace all includes with this one , one board is ready to be used
-
 #include "Board.h"
 
 typedef IBattleshipGameAlgo*(*GetAlgo)();
@@ -16,11 +13,10 @@ public:
 	int scoreA = 0;
 	int scoreB = 0;
 	//constr
-	Match(string playerAPath, string playerBPath, string boardPath);
+	Match(string playerAPath, string playerBPath, Board &board);
 	//destr
 	~Match() {}
 	//other functions
-	//	pair<int, int> run_thread_match(string playerAPath, string playerBPath, string boardPath);	//TODO move this function to thread class
 	pair<int, int> runMatch();
 
 protected:

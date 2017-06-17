@@ -28,28 +28,45 @@ struct ResultData {
 //a mutex prevent multi writing confilcts
 class TeamScoreLine {
 public:
-	mutex wrMutex;
+	//mutex wrMutex;
 	vector<ResultData> ScoreLine;
 	vector<bool> ScoreLineReady;
-	TeamScoreLine() {};	//default constructor
+	size_t numberOfMatchs;
+	TeamScoreLine() {};	//default empty constructor, used just for easy vecotr init
+	TeamScoreLine(size_t numberOfMatchs_) {
+		numberOfMatchs = numberOfMatchs_;
+		for (unsigned int i = 0; i < numberOfMatchs; i++) {
+			ScoreLine.push_back(ResultData());
+			ScoreLineReady.push_back(false);
+		}
+	}	
 
 	void writeNewScore(ResultData score) {
-		wrMutex.lock();
-		ScoreLine.push_back(score);
-		ScoreLineReady.push_back(true);
-		wrMutex.unlock();
+		//wrMutex.lock();
+		unsigned int i = 0;
+		while(i<numberOfMatchs){
+			if (!ScoreLineReady[i]) {	//if score in round i is false then thats the round we need to put score in now.
+				break;
+			}
+			i += 1;
+		}
+		ScoreLine[i] = score;
+		ScoreLineReady[i] = true;
+		//wrMutex.unlock();
 	}
 
 	ResultData readRoundScore(int roundNumber) {
-		if (canReadRound(roundNumber)){	//writing the score happans before the ready, so if ready exists and is true then score is ready.
+		if (canReadTeamRound(roundNumber)){	//writing the score happans before the ready, so if ready exists and is true then score is ready.
 			return ScoreLine[roundNumber];
 		}
 		//if cant read
 		return ResultData();	//to avoid this return , call canReadRound first to be sure you read valid data
 	}
 
-	bool canReadRound(int roundNumber) {
-		if (ScoreLineReady[roundNumber] != NULL && ScoreLineReady[roundNumber]) {
+	bool canReadTeamRound(int roundNumber) {
+		//cout << "entered canReadTeamRound "<< roundNumber << endl;
+		if ((ScoreLineReady[roundNumber] != NULL) && (ScoreLineReady[roundNumber])) {
+			//cout << "return true" << endl;
 			return true;
 		} else {
 			return false;
@@ -59,16 +76,16 @@ public:
 };
 
 struct MatchData {
-	string pathA, pathB, pathBoard;
-	MatchData() {};	//default constructor to make it simpler to work with MatchData vectors
-	MatchData(string pathA_, string pathB_, string pathBoard_) : pathA(pathA_), pathB(pathB_), pathBoard(pathBoard_) {};
+	string pathA, pathB;
+	Board board;
+	MatchData(string pathA_, string pathB_, Board board_) : pathA(pathA_), pathB(pathB_), board(board_) {};
 };
 
 class ThreadManager {
 private:
 	size_t numberOfThreads;
 	vector<string> algoPaths;
-	vector<string> boardPaths;
+	vector<Board> boards;
 	vector<thread> vec_threads;
 	size_t numDays;
 	map<string, ResultData> scoreBoardSum;
@@ -77,15 +94,17 @@ public:
 	atomic<int> currTask = 0;
 	vector<string> teams;
 	vector<MatchData> tasks;
+	mutex wrmutex;
 	map<string, TeamScoreLine> scoreBoard;
 	mutex scoreBoardMutex;
 	size_t numOfTasks;
 
 	bool canReadRound(int roundNumber) {
+		//cout << "entered CanReadRound" << endl;
 		if (scoreBoard.empty())
 			return false;
 		for (std::map<string, TeamScoreLine>::iterator it = scoreBoard.begin(); it != scoreBoard.end(); ++it) {
-			if (!it->second.canReadRound(roundNumber)) {
+			if (!it->second.canReadTeamRound(roundNumber)) {
 				return false;
 			}
 		}
@@ -96,13 +115,13 @@ public:
 	void margeScores(int roundNumber){
 		for (std::map<string, TeamScoreLine>::iterator it = scoreBoard.begin(); it != scoreBoard.end(); ++it) {
 			string teamName = it->first;
-			scoreBoardSum[teamName] = scoreBoardSum[teamName] + it->second.readRoundScore(roundNumber);
+			scoreBoardSum[teamName] = (scoreBoardSum[teamName]) + (it->second.readRoundScore(roundNumber));
 		}
 	}
 
-	ThreadManager(vector<string> algoPaths_, vector<string> boardPaths_, int NumberOfThreads_) : algoPaths(algoPaths_), boardPaths(boardPaths_), numberOfThreads(NumberOfThreads_), vec_threads(numberOfThreads) {
-		//cout << "in ThreadManager constructor\n";
-		numOfTasks = algoPaths.size() * (algoPaths.size() - 1) * boardPaths.size();
+	ThreadManager(vector<string> algoPaths_, vector<Board> boards_, int NumberOfThreads_) : algoPaths(algoPaths_), boards(boards_), numberOfThreads(NumberOfThreads_), vec_threads(numberOfThreads) {
+		//cout << "in ThreadManager constructor with "<< algoPaths_.size() << " teams" << endl;
+		numOfTasks = algoPaths.size() * (algoPaths.size() - 1) * boards.size();
 		//cout << "expected number of tasks : " << numOfTasks << "\n";
 		//tasks.resize(numOfTasks);
 		//make the task pool
@@ -112,7 +131,7 @@ public:
 			algoPaths.push_back("dummy"); // If odd number of teams add a dummy
 		}
 		size_t numTeams = algoPaths.size();
-		numDays = (numTeams - 1); // Days needed to complete tournament
+		numDays = (numTeams - 1); // Days needed to complete tournament once
 		size_t halfSize = numTeams / 2;
 
 		for (vector<string>::iterator teamsItr = algoPaths.begin(); teamsItr != algoPaths.end(); ++teamsItr) {
@@ -124,38 +143,36 @@ public:
 		}
 
 		size_t teamsSize = teams.size();
-		//cout << "teams:\n";
-		//for (vector<string>::iterator teamsItr = teams.begin(); teamsItr != teams.end(); ++teamsItr) {
-		//	cout << "<" << *teamsItr << ">" << " , ";
-		//}
-		//cout << "\n";
-		//std::cin.ignore();
 
 		vector<MatchData> tempTasks;
-		for (vector<string>::iterator boardItr = boardPaths.begin(); boardItr != boardPaths.end(); ++boardItr) {
-			for (int day = 0; day < numDays; day++) {
-				//			Console.WriteLine("Day {0}", (day + 1));
+		for (vector<Board>::iterator boardItr = boards.begin(); boardItr != boards.end(); ++boardItr) {
+			for (unsigned int day = 0; day < numDays; day++) {
 				int teamIdx = day % teamsSize;
-
-				//			Console.WriteLine("{0} vs {1}", teams[teamIdx], ListTeam[0]);
-
-				for (int idx = 1; idx < halfSize; idx++) {
+				for (unsigned int idx = 1; idx < halfSize; idx++) {
 					size_t firstTeam = (day + idx) % teamsSize;
 					size_t secondTeam = (day + teamsSize - idx) % teamsSize;
 					tempTasks.push_back(MatchData(teams[firstTeam], teams[secondTeam], *boardItr));
 					tasks.push_back(MatchData(teams[firstTeam], teams[secondTeam], *boardItr));
-					//Console.WriteLine("{0} vs {1}", teams[firstTeam], teams[secondTeam]);
 				}
 			}
 		}
+
 		//
 		//now make the switched sides:
 		for (vector<MatchData>::iterator tasksItr = tempTasks.begin(); tasksItr != tempTasks.end(); ++tasksItr) {
 			auto item = *tasksItr;
-			tasks.push_back(MatchData(item.pathB, item.pathA, item.pathBoard));
+			tasks.push_back(MatchData(item.pathB, item.pathA, item.board));
 			//cout << item.pathA << " vs " << item.pathB << " , on " << item.pathBoard << "\n";
 		}
-
+		
+		//build the scoreboard
+		cout << "init the scoreboards with " << teamsSize << " teams:" << endl;
+		for (unsigned int j = 0; j < teamsSize; j++) {
+			cout << teams[j] << endl;
+			scoreBoard.insert(pair<string, TeamScoreLine>(teams[j], TeamScoreLine(numOfTasks)));
+			scoreBoardSum.insert(pair<string, ResultData>(teams[j], ResultData()));
+		}
+		system("pause");
 		//cout << "printing tasks:\n";
 		//for (vector<MatchData>::iterator tasksItr = tasks.begin(); tasksItr != tasks.end(); ++tasksItr) {
 		//	auto item = *tasksItr;
@@ -167,7 +184,7 @@ public:
 	}
 
 	void printTeam(int place, string teamName) {
-		printf("%d.\t%100s%8d%8d\t%3.2f\t%8d\t%8d", place, teamName.c_str(), scoreBoardSum[teamName].wins, scoreBoardSum[teamName].losses, scoreBoardSum[teamName].winRate, scoreBoardSum[teamName].pointsFor, scoreBoardSum[teamName].pointsAgnst);
+		printf("%d.\t%50s %8d %8d \t%.2f %8d \t%8d\n", place, teamName.substr(teamName.find_last_of('\\') + 1).c_str(), scoreBoardSum[teamName].wins, scoreBoardSum[teamName].losses, scoreBoardSum[teamName].winRate, scoreBoardSum[teamName].pointsFor, scoreBoardSum[teamName].pointsAgnst);
 	}
 
 	void runThreads() {
@@ -178,25 +195,36 @@ public:
 			++id;
 		}
 		//manage the scoreboard
-		int waitngForRound = 0;
+		unsigned int waitngForRound = 0;
 		
-		while (waitngForRound < numDays) {
+		while (waitngForRound < numDays*2) {
 			if ( canReadRound(waitngForRound) ){	//round <waitngForRound> is done and we can read/print resualts
+				cout << "ready to write round " << waitngForRound << " have " << scoreBoardSum.size() << " teams" << endl;
 				margeScores(waitngForRound);	//first marge the scores to the sum board
-				map<double, string> sortingByWinRate;	//create new map to sort the table by winRate
-				
+				vector<pair<double, string>> sortingByWinRate;	//create new map to sort the table by winRate
+				cout << "after marge have " << scoreBoardSum.size() << " teams" << endl;
+
 				//map<string, ResultData> scoreBoardSum;
 				for (std::map<string, ResultData>::iterator it = scoreBoardSum.begin(); it != scoreBoardSum.end(); ++it) {
-					sortingByWinRate.insert(pair<double, string>(it->second.winRate, it->first));
+					sortingByWinRate.push_back(pair<double, string>(it->second.winRate, it->first));
 				}
-				// now go over the sortingByWinRate and print the scores
-				int place = 1;
-				cout << "Round " << waitngForRound << " \n";
-				printf("#\t%100sWins\tLosses\t%%\t\tPts For  Pts Against\n", "Team Name");
-				for (std::map<double, string>::iterator it = sortingByWinRate.begin(); it != sortingByWinRate.end(); ++it) {
-					printTeam(place, it->second);
-					place += 1;
+				std::sort(sortingByWinRate.begin(), sortingByWinRate.end(), [](auto &left, auto &right) {
+					return left.first < right.first;
+				});
+				cout << "Round " << waitngForRound + 1 << "/" << numDays * 2 << endl;
+				printf("#\t%50s\tWins\tLosses\t  %%\tPts For  Pts Against\n", "Team Name");
+				for (unsigned int p = 0; p < sortingByWinRate.size(); p++) {
+					printTeam(p + 1, sortingByWinRate[p].second);
 				}
+				//cout << "### " << sortingByWinRate.size() << " ###" << endl;
+				//// now go over the sortingByWinRate and print the scores
+				//int place = 1;
+			
+				
+				//for (std::map<double, string>::iterator it = sortingByWinRate.begin(); it != sortingByWinRate.end(); ++it) {
+				//	printTeam(place, it->second);
+				//	place += 1;
+				//}
 				cout << "\n\n";	
 				waitngForRound += 1;
 			}
@@ -213,15 +241,14 @@ public:
 
 	void ThreadTaskRunning(int id) {
 		while (true) {
-			int taskToRun = atomic_fetch_add(&currTask, 1);
+			unsigned int taskToRun = atomic_fetch_add(&currTask, 1);
 			if (taskToRun >= numOfTasks) {
 				return;
 			}
 			//else run task[taskToRun]
 			auto coming_match = tasks[taskToRun];
-			pair<int, int> gameScore = run_thread_match(coming_match.pathA, coming_match.pathB, coming_match.pathBoard);
-			cout << gameScore.first << " / " << gameScore.second << endl;
-			//TODO : switch from full path to name when reporting scores
+			pair<int, int> gameScore = run_thread_match(coming_match.pathA, coming_match.pathB, coming_match.board);
+			//cout << gameScore.first << " / " << gameScore.second << endl;
 			//set the ResultData
 			ResultData AResultData;
 			ResultData BResultData;
@@ -235,9 +262,11 @@ public:
 				AResultData = ResultData(0, 0, gameScore.first, gameScore.second);
 				BResultData = ResultData(0, 0, gameScore.second, gameScore.first);
 			}
+
+			wrmutex.lock();
 			scoreBoard[coming_match.pathA].writeNewScore(AResultData);	//write players A score to the board
 			scoreBoard[coming_match.pathB].writeNewScore(BResultData);	//write players B score to the board
-
+			wrmutex.unlock();
 			// done with this game , Ready to pick next task
 		}
 
@@ -246,8 +275,8 @@ public:
 	}
 
 
-	pair<int, int> run_thread_match(string playerAPath, string playerBPath, string boardPath) {
-		Match A(playerAPath, playerBPath, boardPath);
+	pair<int, int> run_thread_match(string playerAPath, string playerBPath, Board board) {
+		Match A(playerAPath, playerBPath, board);
 		auto score = A.runMatch();
 		return score;
 	}
@@ -256,42 +285,33 @@ public:
 
 
 
-//int main(int argc, char* argv[]) {
-//	string path = ".";
-//	int num_of_threads = 4;
-//	for (int i = 1; i < argc; i++) {
-//		if (!strcmp(argv[i], "--threads")) {
-//			if (argc > i + 1) {
-//				num_of_threads = atoi(argv[i + 1]);
-//				i++;
-//			}
-//			else
-//				return ERR_WRONG_NUM_OF_ARGS;
-//		}
-//		else
-//			path = argv[i];
-//	}
-//	cout << path << endl;
-//	system("pause");
-//
-//	vector<string> algoPaths_ = get_all_files_names_within_folder(path, "dll");
-//	if (algoPaths_.size() < 3)
-//		return ERR_NUM_OF_ALGO;
-//	//TODO: send boards and not paths
-//	vector<string> boardPaths_ = get_all_files_names_within_folder(path, "sboard");
-//	ThreadManager tm( algoPaths_, boardPaths_,num_of_threads);
-//	tm.runThreads();	
-//	system("pause");
-//}
+int main(int argc, char* argv[]) {
+	string path = ".";
+	int num_of_threads = 4;
+	for (int i = 1; i < argc; i++) {
+		if (!strcmp(argv[i], "--threads")) {
+			if (argc > i + 1) {
+				num_of_threads = atoi(argv[i + 1]);
+				i++;
+			}
+			else
+				return ERR_WRONG_NUM_OF_ARGS;
+		}
+		else
+			path = argv[i];
+	}
+	cout << path << endl;
+	system("pause");
 
-
-int main() {
-	string path = "E:\\AdvancedPrograming\\Testing";
+	vector<string> algoPaths_ = get_all_files_names_within_folder(path, "dll");
+	if (algoPaths_.size() < 3)
+		return ERR_NUM_OF_ALGO;
 	vector<string> boardPaths_ = get_all_files_names_within_folder(path, "sboard");
-	cout << boardPaths_[0] << endl;
-	Board a = Board(boardPaths_[2]);
-	a.kaboom(Coordinate(5, 5, 3));
-	a.kaboom(Coordinate(5, 4, 2));
-	a.print();	
+	vector<Board> boards;
+	for (auto &b : boardPaths_) {
+		boards.push_back(Board(b));
+	}
+	ThreadManager tm( algoPaths_, boards ,num_of_threads);
+	tm.runThreads();	
 	system("pause");
 }

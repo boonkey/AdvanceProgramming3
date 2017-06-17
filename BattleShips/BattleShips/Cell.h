@@ -9,5 +9,4 @@ public:
 	int score();
 	void kaboom(HEATMODIFIER i,int score);
 	void print();
-
 };
