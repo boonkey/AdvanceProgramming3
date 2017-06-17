@@ -1,13 +1,12 @@
 #pragma once
 
-#include "IBattleshipGameAlgo.h"
 #include "Ship.h"
-#include "Cell.h"
+
 
 class Board : public BoardData {
 private:
 	Cell ***board;
-
+	bool defective_ships_on_Board = false;
 	//unsafe function. only allows internal excess
 	Cell *cellAt(Coordinate c);
 
@@ -26,10 +25,20 @@ public:
 	void kaboom(Coordinate loc);
 	void kaboom(Ship ship);
 	void operator=(Board const &x);
-	void print();
+	void print(bool heat = false);
 	void set(Coordinate loc, char type);
 
-	
+	pair<int, int> scan_Board();
+	void cleanBoard();
+	void restoreBoard();
+	vector<Ship> scan();
+	void scanShip(Coordinate cor, Ship& fillShip);
+	void burnShip(Coordinate i, char ch);
+	int getCounter(Coordinate i);
+	Ship addShip(Coordinate i);
+	bool check_depth(Coordinate cor, char ch);
+	bool check_row(Coordinate cor, char ch);
+	bool check_col(Coordinate cor, char ch);
 };
 
 int pathExist(string pathname);

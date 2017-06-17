@@ -37,10 +37,10 @@
 			//cout << "B " << scoreB << " playing? " << stillPlayingB << endl;
 
 			//check if game ended 
-			//if (matchBoard.gameOver(true) || matchBoard.gameOver(false)) {
-			//	stillPlayingA = false;
-			//	stillPlayingB = false;
-			//}
+			if (matchBoard.gameOver(true) || matchBoard.gameOver(false)) {
+				stillPlayingA = false;
+				stillPlayingB = false;
+			}
 
 			if ((stillPlayingA == false) && (stillPlayingB == false)) {	//both players stoped playing (game ended or no more moves
 				return pair<int, int>(scoreA,scoreB);

@@ -1,6 +1,7 @@
 #pragma once
 #include "DataTypes.h"
-
+#include "Cell.h"
+#include "IBattleshipGameAlgo.h"
 
 
 class Ship {
@@ -13,6 +14,7 @@ public:
 	//constructor
 	Ship(char t, DIRECTION direction);
 	bool isSideA();
+	char getType() { return type; };
 	void print();
 	int putInPlace(vector<Coordinate> location);
 	bool checkAlive();
@@ -22,4 +24,7 @@ public:
 	DIRECTION getDirection();
 	int getShipScore();
 	vector<pair<Coordinate, bool>> location();
+
+	
+
 };
