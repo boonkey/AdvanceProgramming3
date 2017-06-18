@@ -1,43 +1,23 @@
 #include "Board.h"
 
-/*Board::Board(Coordinate size) {
-	_rows = size.row;
-	_cols = size.col;
-	_depth = size.depth;
-
-	board = new char**[_rows];
-	for (int i = 0; i < _rows; ++i) {
-		board[i] = new char*[_cols];
-		for (int j = 0; j < _depth; j++) {
-			board[i][j] = new char[_depth];
-		}
-	}
-	//init to clear board
-	for (int i = 0; i < _rows; ++i) {
-		for (int j = 0; j < _cols; ++j) {
-			for (int k = 0; k < _depth; ++k) {
-				board[i][j][k] = ' ';
-			}
-		}
-	}
-}*/
-
-
 pair<int, int> Board::scan_Board() {
 	cleanBoard();
+	//print();
+	//system("pause");
 	int shipCounterA = 0;
 	int shipCounterB = 0;
 	ships = scan();
-	for (auto item : ships){
-		item.print();
+	restoreBoard();
+	checkAjancencies();
+	for (auto item : ships) {
+		//item.print();
 		if (item.isSideA()) {
 			shipCounterA++;
-		} else {
+		}
+		else {
 			shipCounterB++;
 		}
 	}
-	restoreBoard();
-	checkAjancencies();
 	pair<int,int> result = make_pair(shipCounterA, shipCounterB);
 	return result;
 	//TODO - ADD prints for incorrect Board alligment
@@ -49,7 +29,7 @@ void Board::cleanBoard() {
 	Coordinate i = Coordinate(0, 0, 0);
 	for (i.row = 1; i.row <= rows(); i.row++) {
 		for (i.col = 1; i.col <= cols(); i.col++) {
-			for (i.depth = 1; i.depth < depth(); i.depth++) {
+			for (i.depth = 1; i.depth <= depth(); i.depth++) {
 				switch(charAt(i)) {
 					case 'b':
 					case 'B':
@@ -91,9 +71,24 @@ void Board::checkAjancencies() {
 	for (i.row = 1; i.row <= rows(); i.row++) {
 		for (i.col = 1; i.col <= cols(); i.col++) {
 			for (i.depth = 1; i.depth < depth(); i.depth++) {
-				if (check_col(i,charAt(i))|| check_col(i, ' ')||check_col(i, charAt(i)) || check_col(i, ' ') || check_col(i, charAt(i)) || check_col(i, ' ')){
-					valid = false;
-				}
+				char ch = charAt(i); //we check the char in (i)
+				i.col++;             //examine neighboring cols and if we have a different none ' ' char, two ships are ajacent - important note, if out of bounds, charAt returns ' '
+				if (charAt(i) != ch && (charAt(i) != ' ')) { valid = false; }
+				i.col -= 2;
+				if (charAt(i) != ch && (charAt(i) != ' ')) { valid = false; }
+				i.col++;
+
+				i.row++;			//repeat the process for row
+				if (charAt(i) != ch && (charAt(i) != ' ')) { valid = false; }
+				i.row -= 2;
+				if (charAt(i) != ch && (charAt(i) != ' ')) { valid = false; }
+				i.row++;
+
+				i.depth++;			//repeat the process for depth
+				if (charAt(i) != ch && (charAt(i) != ' ')) { valid = false; }
+				i.depth -= 2;
+				if (charAt(i) != ch && (charAt(i) != ' ')) { valid = false; }
+				i.depth++;
 			}
 		}
 	}
@@ -103,14 +98,14 @@ vector<Ship> Board::scan() {
 	//	int counterSideA;
 	//	int counterSideB;
 	Coordinate i = Coordinate(0, 0, 0);
-	cout << "Scan Started" << endl;
+	//cout << "Scan Started" << endl;
 	for (i.row = 1; i.row <= rows(); i.row++) {
 		for (i.col = 1; i.col <= cols(); i.col++) {
 			for (i.depth = 1; i.depth <= depth(); i.depth++) {
-				PRINT(i) << " : " << charAt(i) << endl;
+				//PRINT(i) << " Scanning: " << charAt(i) << endl;
 				if (getCounter(i) != 0) {
-					cout << endl << "Found a Ship: " << charAt(i) << endl;
-					PRINT(i) << endl;
+					//cout << endl << "Found a Ship: " << charAt(i) << endl;
+				//	PRINT(i) << endl;
 					Ship shipAddr = Ship('z', DIRECTION::X);
 					scanShip(i, shipAddr);
 					if (shipAddr.getType() != 'z') {
@@ -126,7 +121,9 @@ vector<Ship> Board::scan() {
 	return result;
 }
 
-
+bool Board::isValid() {
+	return valid;
+}
 
 
 
@@ -161,15 +158,28 @@ Board::Board(string filename) {
 			}
 		}
 		loc.depth = 1;
-		getline(boardFile, line);
-		while (loc.depth <= _depth) {
-			loc.row = 1;
-			while (getline(boardFile, line) && loc.row <= _rows) {
-				if (line.length() < _cols) {
-					for (int i = line.length(); i <= cols(); i++)
-						line.push_back(' ');
+		bool infile = true;
+		infile = true;
+		for (loc.depth=1; loc.depth <= depth(); loc.depth++) {
+			if (infile) {
+				getline(boardFile, line);
+				if (boardFile.eof())
+					infile = false;
+			}
+			for (loc.row = 1; loc.row <= rows(); loc.row++) {
+				if (infile) {
+					getline(boardFile, line);
+					if (boardFile.eof())
+						infile = false;
 				}
-				for (loc.col = 1; loc.col <= _cols; loc.col++) {
+				else {
+					line = "";
+					for (loc.col = 1; loc.col <= cols(); loc.col++) {
+						line.push_back(' ');
+					}
+				}
+				//cout << "[" << line << "]" << endl;
+				for (loc.col = 1; loc.col <= cols(); loc.col++) {
 					//check for input vaildity
 					switch (line[loc.col - 1]) {
 					case 'm':
@@ -185,19 +195,16 @@ Board::Board(string filename) {
 						line[loc.col - 1] = ' ';
 						break;
 					}
-				//	cout << "[" << line << "]" << endl;
 					initSet(loc, line[loc.col - 1]);
 				}
-				loc.row++;
 			}
-			
-			loc.row = 1;
-			loc.depth++;
 		}
-		print();
+		//print();
+		
 		pair<int,int> res = scan_Board();
 		printf("Board Anali [%s]: found %d ships for A, and %d ships for B\n", filename.c_str(), res.first, res.second);
-		print();
+		//print();
+		//system("pause");
 	}
 	else {
 		printf("Unable to open (file is close) %s\n ", filename.c_str());
@@ -311,8 +318,8 @@ void Board::print(bool heat) {
 		}
 		cout <<endl;
 	}
-	for (auto &s : ships)
-		s.print();
+	//for (auto &s : ships)
+		//s.print();
 }
 
 char Board::charAt(Coordinate c) const { //return ' ' for non exist coords
@@ -370,33 +377,37 @@ void Board::scanShip(Coordinate cor, Ship& fillShip) {
 	bool flag_depth = check_depth(i, charAt(i));
 	if (flag_row + flag_col + flag_depth > 1) {
 		burnShip(cor, charAt(cor));
-	} else if (flag_row + flag_col + flag_depth == 0 && counter == 1) { //B ship case
+	} else if (flag_row + flag_col + flag_depth == 0){
+		if (counter == 1) { //B ship case
 																		//{code to make a ship and than return it, with it's whole vector of body is i}
-		fillShip = addShip(cor);
+			fillShip = addShip(cor);
+			return;
+		}
+		burnShip(cor, charAt(cor));
 		return;
 		//print("make sure you change me when you know syntax");
 	} else {//this case : ship has a single direction and there is more ship Note- should belong to else if.
 		//i.col = i.col + flag_col; i.row = i.row + flag_row; i.depth = i.depth + flag_depth;//advance in right direction	
-		while (charAt(i) == ch) {
-			cout << "Checking @: ";
-			PRINT(i) << " where there is: " << charAt(i) << endl;
+		while (charAt(i) == ch && ((flag_col | flag_row | flag_depth)|1)) {
+			//cout << "Checking @: ";
+			//PRINT(i) << " where there is: " << charAt(i) << endl;
 			counter--;
 			if (!CoordOnBoard(i)) { 
-				PRINT(i);
-				cout << "board has failed me" << endl;
+			//	PRINT(i);
+				//cout << "board has failed me" << endl;
 				break; 
 			}//we need this 
 			if (flag_col && (check_row(i, charAt(i)) || check_depth(i, charAt(i)))) {
 				burnShip(cor, charAt(cor));
-				cout << "col has failed me" << endl;
+			//	cout << "col has failed me" << endl;
 				return;
 			} else if (flag_row && (check_col(i, charAt(i)) || check_depth(i, charAt(i)))) {
 				burnShip(cor, charAt(cor));
-				cout << "row has failed me" << endl;
+			//	cout << "row has failed me" << endl;
 				return;
 			} else if (flag_depth && (check_row(i, charAt(i)) || check_col(i, charAt(i)))) {
 				burnShip(cor, charAt(cor));
-				cout << "depth has failed me" << endl;
+				//cout << "depth has failed me" << endl;
 				return;
 			}
 			i.col = i.col + flag_col; i.row = i.row + flag_row; i.depth = i.depth + flag_depth;//advance in right direction	
@@ -406,7 +417,7 @@ void Board::scanShip(Coordinate cor, Ship& fillShip) {
 			return;
 		} else { 
 			burnShip(cor, charAt(cor)); 
-			cout << "counter has failed me: " << counter << endl;
+		//	cout << "counter has failed me: " << counter << endl;
 			return; 
 		}//too short or too long
 	}
@@ -484,7 +495,7 @@ Ship Board::addShip(Coordinate i) {
 	}
 	Ship shipToAdd(static_cast<char>(charAt(i)-1), direction);
 	shipToAdd.putInPlace(result);
-	shipToAdd.print();
+	//shipToAdd.print();
 	return shipToAdd;
 }
 
@@ -495,7 +506,7 @@ bool Board::check_depth(Coordinate cor, char ch) { //return true iff the neighbo
 	flag = flag || (charAt(i) == ch);
 	i.depth += 2;
 	flag = flag || (charAt(i) == ch);
-	cout << "depth: " << flag << endl;
+	//cout << "depth: " << flag << endl;
 	return flag;
 }
 
@@ -505,7 +516,7 @@ bool Board::check_row(Coordinate cor, char ch) {//return true iff the neighbors 
 	flag = flag || (charAt(i) == ch);
 	i.row += 2;
 	flag = flag || (charAt(i) == ch);
-	cout << "row: " << flag << endl;
+	//cout << "row: " << flag << endl;
 	return flag;
 }
 bool Board::check_col(Coordinate cor, char ch) {//return true iff the neighbors on the col dimention have the same char
@@ -514,7 +525,7 @@ bool Board::check_col(Coordinate cor, char ch) {//return true iff the neighbors 
 	flag = flag || (charAt(i) == ch);
 	i.col += 2;
 	flag = flag || (charAt(i) == ch);
-	cout << "col: " << flag << endl;
+	//cout << "col: " << flag << endl;
 	return flag;
 }
 

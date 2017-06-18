@@ -12,15 +12,16 @@ private:
 
 public:
 	//Board(Board const &) = delete;
-	
 	Board Board::getSidedBoard(bool sideA);
-	Board(Board const &origin);
+	Board(BoardData const &origin);
 	Board(string filename);
+	Board() {}
+	bool isValid();
 	bool CoordOnBoard(Coordinate coord);
 	bool gameOver(bool sideA);
 	char charAt(Coordinate c)const override;
 	vector<Ship> ships;
-	void init(Coordinate size) {}
+	void init(BoardData const &board);
 	void initSet(Coordinate loc, char type);
 	void kaboom(Coordinate loc);
 	void kaboom(Ship ship);

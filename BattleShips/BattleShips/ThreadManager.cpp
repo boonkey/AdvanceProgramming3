@@ -336,7 +336,11 @@ int main(int argc, char* argv[]) {
 	vector<Board> boards;
 	for (auto &b : boardPaths_) {
 		boards.push_back(Board(b));
+		if (!(boards[boards.size() - 1].isValid()))
+			boards.erase(boards.end() - 1);
 	}
+	cout << "Number of legal players : " << algoPaths_.size() << endl;
+	cout << "Number of legal boards  : " << boards.size() << endl;
 	ThreadManager tm( algoPaths_, boards ,num_of_threads);
 	tm.runThreads();	
 	system("pause");
