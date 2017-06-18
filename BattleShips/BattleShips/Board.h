@@ -6,7 +6,7 @@
 class Board : public BoardData {
 private:
 	Cell ***board;
-	bool defective_ships_on_Board = false;
+	bool valid = true;
 	//unsafe function. only allows internal excess
 	Cell *cellAt(Coordinate c);
 
@@ -39,6 +39,7 @@ public:
 	bool check_depth(Coordinate cor, char ch);
 	bool check_row(Coordinate cor, char ch);
 	bool check_col(Coordinate cor, char ch);
+	void checkAjancencies();
 };
 
 int pathExist(string pathname);

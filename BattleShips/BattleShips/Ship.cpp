@@ -27,11 +27,9 @@ DIRECTION Ship::getDirection() {
 
 int Ship::putInPlace(vector<Coordinate> location) {
 	for (auto p : location) {
-		PRINT(p) << endl;
 		pair <Coordinate, bool> temp = make_pair(p, true); //make the pair of position and alive
 		position.insert(position.end(), 1, temp);				//insert this into the position
 	}
-	print();
 	return 0;
 }
 
@@ -49,7 +47,6 @@ void Ship::print() {
 	for (auto &loc : position)
 		PRINT(loc.first);
 	cout << endl;
-	system("pause");
 }
 
 //returns true iff attack hit the ship

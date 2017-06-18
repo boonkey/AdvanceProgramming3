@@ -212,40 +212,6 @@ public:
 		//run threads
 		for (auto & t : vec_threads) {
 			t = thread(&ThreadManager::ThreadTaskRunning, this, id);
-			//while (true) {
-			//	unsigned int taskToRun = atomic_fetch_add(&currTask, 1);
-			//	if (taskToRun >= numOfTasks) {
-			//		return;
-			//	}
-			//	//cout << numOfTasks << endl;
-			//	//else run task[taskToRun]
-			//	auto coming_match = tasks[taskToRun];
-			//	pair<int, int> gameScore = run_thread_match(coming_match.pathA, coming_match.pathB, coming_match.board);
-			//	//cout << gameScore.first << " / " << gameScore.second << endl;
-			//	//set the ResultData
-			//	ResultData AResultData;
-			//	ResultData BResultData;
-			//	if (gameScore.first > gameScore.second) {			//A won
-			//		AResultData = ResultData(1, 0, gameScore.first, gameScore.second);
-			//		BResultData = ResultData(0, 1, gameScore.second, gameScore.first);
-			//	}
-			//	else if (gameScore.first < gameScore.second) {	//B won
-			//		AResultData = ResultData(0, 1, gameScore.first, gameScore.second);
-			//		BResultData = ResultData(1, 0, gameScore.second, gameScore.first);
-			//	}
-			//	else {	//tie score	- not sure how a game ends with tie but forum commented about this
-			//		AResultData = ResultData(0, 0, gameScore.first, gameScore.second);
-			//		BResultData = ResultData(0, 0, gameScore.second, gameScore.first);
-			//	}
-
-			//	wrmutex.lock();
-			//	cout << coming_match.pathA << " | " << coming_match.pathB << endl;
-			//	cout << "Adress: " << &AResultData << endl;
-			//	scoreBoard[coming_match.pathA].writeNewScore(AResultData);	//write players A score to the board
-			//	scoreBoard[coming_match.pathB].writeNewScore(BResultData);	//write players B score to the board
-			//	wrmutex.unlock();
-			//	// done with this game , Ready to pick next task
-			//}
 			++id;
 		}
 		//manage the scoreboard
