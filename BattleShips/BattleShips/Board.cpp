@@ -212,7 +212,29 @@ Board::Board(string filename) {
 	}
 }
 
-Board::Board(Board const &origin) {
+void Board::init(BoardData const &origin) {
+	_rows = origin.rows();
+	_cols = origin.cols();
+	_depth = origin.depth();
+	board = new Cell**[_rows];
+	for (int i = 0; i < _rows; i++) {
+		board[i] = new Cell*[_cols];
+		for (int j = 0; j < _cols; j++) {
+			board[i][j] = new Cell[_depth];
+		}
+	}
+	Coordinate loc = Coordinate(0, 0, 0);
+	for (loc.depth = 1; loc.depth <= depth(); loc.depth++) {
+		for (loc.row = 1; loc.row <= rows(); loc.row++) {
+			for (loc.col = 1; loc.col <= cols(); loc.col++) {
+				initSet(loc, origin.charAt(loc));
+			}
+		}
+	}
+	scan_Board();
+}
+
+Board::Board(BoardData const &origin) {
 	_rows = origin.rows();
 	_cols = origin.cols();
 	_depth = origin.depth();
@@ -288,6 +310,30 @@ void Board::initSet(Coordinate loc, char type) {
 	cellAt(loc)->heatValues[ZL] = loc.depth;
 	cellAt(loc)->heatValues[ZH] = depth() - loc.depth + 1;
 	cellAt(loc)->value = type;
+}
+
+/*function checks if there is ship there
+return values:
+0 - no ship there
+1 - A's ship there, alive and well
+3 - A's ship there, dead
+2 - B's ship there, alive and well
+4 - B's ship there, dead
+*/
+int Board::isShipThere(Coordinate location) {
+	for (auto ship : ships) {
+		if (ship.checkLocation(location)) {
+			if (ship.isSideA() && ship.checkAlive())
+				return 1;
+			if (ship.isSideA() && !ship.checkAlive())
+				return 3;
+			if (!ship.isSideA() && ship.checkAlive())
+				return 2;
+			if (!ship.isSideA() && !ship.checkAlive())
+				return 4;
+		}
+	}
+	return 0;
 }
 
 void Board::print(bool heat) {
@@ -543,7 +589,9 @@ bool Board::CoordOnBoard(Coordinate coord) {
 }
 
 Cell* Board::cellAt(Coordinate c) {
-	return &board[c.row - 1][c.col - 1][c.depth - 1];
+	if (CoordOnBoard(c))
+		return &board[c.row - 1][c.col - 1][c.depth - 1];
+	return NULL;
 }
 
 void Board::kaboom(Coordinate loc) {
@@ -586,6 +634,33 @@ void Board::kaboom(Ship ship) {
 		Coordinate temp = m.first;
 		temp.row--;
 		if (CoordOnBoard(temp)) 
+			kaboom(temp);
+		temp.row += 2;
+		if (CoordOnBoard(temp))
+			kaboom(temp);
+		temp.row--;
+		temp.col--;
+		if (CoordOnBoard(temp))
+			kaboom(temp);
+		temp.col += 2;
+		if (CoordOnBoard(temp))
+			kaboom(temp);
+		temp.col--;
+		temp.depth--;
+		if (CoordOnBoard(temp))
+			kaboom(temp);
+		temp.depth += 2;
+		if (CoordOnBoard(temp))
+			kaboom(temp);
+		temp.depth--;
+	}
+}
+
+void Board::kaboom(vector<Coordinate> kaboomboom) {
+	for (auto &m : kaboomboom) {
+		Coordinate temp = m;
+		temp.row--;
+		if (CoordOnBoard(temp))
 			kaboom(temp);
 		temp.row += 2;
 		if (CoordOnBoard(temp))

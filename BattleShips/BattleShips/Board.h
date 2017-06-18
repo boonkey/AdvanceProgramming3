@@ -8,7 +8,7 @@ private:
 	Cell ***board;
 	bool valid = true;
 	//unsafe function. only allows internal excess
-	Cell *cellAt(Coordinate c);
+	
 
 public:
 	//Board(Board const &) = delete;
@@ -20,11 +20,14 @@ public:
 	bool CoordOnBoard(Coordinate coord);
 	bool gameOver(bool sideA);
 	char charAt(Coordinate c)const override;
+	Cell *cellAt(Coordinate c);
 	vector<Ship> ships;
 	void init(BoardData const &board);
 	void initSet(Coordinate loc, char type);
+	int isShipThere(Coordinate location);
 	void kaboom(Coordinate loc);
 	void kaboom(Ship ship);
+	void kaboom(vector<Coordinate> kaboomboom);
 	void operator=(Board const &x);
 	void print(bool heat = false);
 	void set(Coordinate loc, char type);

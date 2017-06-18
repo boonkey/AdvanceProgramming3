@@ -1,5 +1,5 @@
 #pragma once
-
+#include <algorithm>
 #include <atomic>
 #include <cerrno>
 #include <conio.h>
@@ -22,7 +22,6 @@
 
 using namespace std;
 
-#define BOARD_SIZE 10
 #define PRINT(loc) cout << "< " << loc.row << " , " << loc.col << " , " << loc.depth << "> "
 
 //================== Error Code Definition ===========
