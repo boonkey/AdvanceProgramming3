@@ -1,16 +1,14 @@
 #include "Board.h"
-
+//this function goes over all cells, and verifies board legallity ->abnormally shaped/sized ships are earased before checking for ajacent ships, as was required.
+//all thips are added to the game manager's array
 pair<int, int> Board::scan_Board() {
 	cleanBoard();
-	//print();
-	//system("pause");
 	int shipCounterA = 0;
 	int shipCounterB = 0;
 	ships = scan();
 	restoreBoard();
 	checkAjancencies();
 	for (auto item : ships) {
-		//item.print();
 		if (item.isSideA()) {
 			shipCounterA++;
 		}
@@ -20,7 +18,6 @@ pair<int, int> Board::scan_Board() {
 	}
 	pair<int,int> result = make_pair(shipCounterA, shipCounterB);
 	return result;
-	//TODO - ADD prints for incorrect Board alligment
 }
 
 
@@ -95,23 +92,16 @@ void Board::checkAjancencies() {
 }
 vector<Ship> Board::scan() {
 	vector<Ship> result;
-	//	int counterSideA;
-	//	int counterSideB;
 	Coordinate i = Coordinate(0, 0, 0);
-	//cout << "Scan Started" << endl;
 	for (i.row = 1; i.row <= rows(); i.row++) {
 		for (i.col = 1; i.col <= cols(); i.col++) {
 			for (i.depth = 1; i.depth <= depth(); i.depth++) {
-				//PRINT(i) << " Scanning: " << charAt(i) << endl;
 				if (getCounter(i) != 0) {
-					//cout << endl << "Found a Ship: " << charAt(i) << endl;
-				//	PRINT(i) << endl;
 					Ship shipAddr = Ship('z', DIRECTION::X);
 					scanShip(i, shipAddr);
 					if (shipAddr.getType() != 'z') {
 						result.push_back(shipAddr); //would work with scanShip as well as addShip 	 //if (islower(charAt(i))) {counterSideA++; }		 //else  {counterSideB++; 
 					} else { //we have a defective ship and need to end the game
-						cout << "I have identified an illegal ship without blowing up - delete this print" << endl;
 						valid = false;
 					}
 				}
@@ -140,12 +130,10 @@ Board::Board(string filename) {
 	ifstream boardFile(filename);
 	if (boardFile.is_open()) {
 		getline(boardFile, line);
-		//cout << line << endl;
 		if (sscanf_s(line.c_str(), "%dx%dx%d", &loc.col, &loc.row, &loc.depth) != 3) {
 			valid = false;
 			return;
 		}
-		//PRINT(loc) << endl;
 		_rows = loc.row;
 		_cols = loc.col;
 		_depth = loc.depth;
@@ -199,18 +187,14 @@ Board::Board(string filename) {
 				}
 			}
 		}
-		//print();
-		
 		pair<int,int> res = scan_Board();
-		printf("Board Anali [%s]: found %d ships for A, and %d ships for B\n", filename.c_str(), res.first, res.second);
-		//print();
-		//system("pause");
 	}
 	else {
 		printf("Unable to open (file is close) %s\n ", filename.c_str());
 		return;
 	}
 }
+
 
 void Board::init(BoardData const &origin) {
 	_rows = origin.rows();
@@ -234,10 +218,14 @@ void Board::init(BoardData const &origin) {
 	scan_Board();
 }
 
-Board::Board(BoardData const &origin) {
-	_rows = origin.rows();
-	_cols = origin.cols();
-	_depth = origin.depth();
+Coordinate Board::getSize() const {
+	return Coordinate(rows(), cols(), depth());
+}
+
+Board::Board(Coordinate size) {
+	_rows = size.row;
+	_cols = size.col;
+	_depth = size.depth;
 	board = new Cell**[_rows];
 	for (int i = 0; i < _rows; i++) {
 		board[i] = new Cell*[_cols];
@@ -265,27 +253,30 @@ void Board::operator=(Board const &x) {
 				board[i][j][k] = x.board[i][j][k];
 
 }
-
- Board Board::getSidedBoard(bool sideA) {
-	Board sidedBoard = Board(*this);
+//returns a partial board, that has no "illegal" information for players to use
+ Board Board::getSidedBoard(bool sideA) const {
+	 Coordinate i = getSize();
+	 Board sidedBoard = Board(i);
 	//init to clear board
-	Coordinate i = Coordinate(0,0,0);
-	for (i.row = 1; i.row < _rows; ++i.row) {
-		for (i.col = 1; i.col < _cols; ++i.col) {
-			for (i.depth = 1; i.depth < _depth; ++i.depth) {
-				if (IsCharUpperA(charAt(i)) != 0 && sideA)
+	print();
+	for (i.row = 1; i.row <= _rows; ++i.row) {
+		for (i.col = 1; i.col <= _cols; ++i.col) {
+			for (i.depth = 1; i.depth <= _depth; ++i.depth) {
+				if (IsCharUpperA(charAt(i)) != 0 && sideA) {
 					sidedBoard.set(i, charAt(i));
-				else if (IsCharLowerA(charAt(i)) != 0 && !sideA)
+				}
+				else if (IsCharUpperA(charAt(i)) == 0 && (sideA == false)) {
 					sidedBoard.set(i, charAt(i));
-				else
+				}
+				else {
 					sidedBoard.set(i, ' ');
+				}
 			}
 		}
 	}
-	
 	return sidedBoard;
 }
-
+ //determine wether or not the game is over
 bool Board::gameOver(bool sideA) {
 	for (auto ship : ships) {
 		if ((ship.isSideA() == sideA) && ship.checkAlive())
@@ -297,11 +288,11 @@ bool Board::gameOver(bool sideA) {
 
 
 
-// set works from 1!!!!!!!!
+// function that modifies the char value of a given coordinate on board --remember it starts from 1!!!
 void Board::set(Coordinate loc, char type) {
 	board[loc.row - 1][loc.col - 1][loc.depth - 1].value = type;
 }
-
+//this it used to initialize values used to calculate heat map results, which will, in turn, help us attack in the proper areas
 void Board::initSet(Coordinate loc, char type) {
 	cellAt(loc)->heatValues[XL] = loc.row;
 	cellAt(loc)->heatValues[XH] = rows() - loc.row + 1;
@@ -336,7 +327,7 @@ int Board::isShipThere(Coordinate location) {
 	return 0;
 }
 
-void Board::print(bool heat) {
+void Board::print(bool heat) {//prints the board on the screen (bool is used to determine wether the print should be of the heat map values used to attack, or of the char array that is board.
 	Coordinate loc = Coordinate(0, 0, 0);
 	for (loc.depth = 1; loc.depth <= depth(); loc.depth++) {
 		printf("depth: %d\n", loc.depth);
@@ -364,8 +355,29 @@ void Board::print(bool heat) {
 		}
 		cout <<endl;
 	}
+}
+
+void Board::print() const {//prints the board on the screen (bool is used to determine wether the print should be of the heat map values used to attack, or of the char array that is board.
+	return;
+	Coordinate loc = Coordinate(0, 0, 0);
+	for (loc.depth = 1; loc.depth <= depth(); loc.depth++) {
+		printf("depth: %d\n", loc.depth);
+		for (loc.row = 0; loc.row <= rows(); loc.row++) { //print line marks also
+			for (loc.col = 1; loc.col <= cols(); loc.col++)
+				printf("%c%c%c%c%c%c", char(178), char(178), char(178), char(178), char(178), char(178));
+			cout << char(178) << endl << char(178);
+			for (loc.col = 1; loc.col <= cols(); loc.col++) {
+				if (loc.row == 0)
+					printf(" %3d %c", loc.col, char(178));
+				else if (loc.row <= rows())
+					printf("  %c  %c", charAt(loc), char(178));
+			}
+			cout << endl;
+		}
+		cout << endl;
+	}
 	//for (auto &s : ships)
-		//s.print();
+	//s.print();
 }
 
 char Board::charAt(Coordinate c) const { //return ' ' for non exist coords
@@ -412,9 +424,10 @@ vector<string> get_all_files_names_within_folder(string folder, string fileType)
 	return names;
 }
 
-//Note – when we enter this function - the board has been cleared of none - ship chars, and we are at the shallowest(none deep), upper, left block of the ship.
-//also – getchar(out of board index) = special_reserved_val
-void Board::scanShip(Coordinate cor, Ship& fillShip) {
+//Note – when we enter this function - the board has been cleared of non-ship chars (=,%,etc), and we are at the shallowest(none deep), upper, left block of the ship we encounter.
+// this function contains the logic of verifying ship legallity. it uses a variety of conditions to assert correct shape and size. if the ship is legal we add it to the board(addShip), 
+// and otherwise we remove it(burnShip)
+void Board::scanShip(Coordinate cor, Ship& fillShip) { //
 	Coordinate i = Coordinate(cor.row, cor.col, cor.depth);
 	char ch = charAt(cor);
 	int counter = getCounter(i);
@@ -424,56 +437,45 @@ void Board::scanShip(Coordinate cor, Ship& fillShip) {
 	if (flag_row + flag_col + flag_depth > 1) {
 		burnShip(cor, charAt(cor));
 	} else if (flag_row + flag_col + flag_depth == 0){
-		if (counter == 1) { //B ship case
-																		//{code to make a ship and than return it, with it's whole vector of body is i}
+		if (counter == 1) { //B ship case//
 			fillShip = addShip(cor);
 			return;
 		}
 		burnShip(cor, charAt(cor));
 		return;
-		//print("make sure you change me when you know syntax");
-	} else {//this case : ship has a single direction and there is more ship Note- should belong to else if.
-		//i.col = i.col + flag_col; i.row = i.row + flag_row; i.depth = i.depth + flag_depth;//advance in right direction	
-		while (charAt(i) == ch && ((flag_col | flag_row | flag_depth)|1)) {
-			//cout << "Checking @: ";
-			//PRINT(i) << " where there is: " << charAt(i) << endl;
+	} else {//this case : ship has a single direction and there are more cells 
+		while (charAt(i) == ch) {
 			counter--;
 			if (!CoordOnBoard(i)) { 
-			//	PRINT(i);
-				//cout << "board has failed me" << endl;
 				break; 
-			}//we need this 
+			} 
 			if (flag_col && (check_row(i, charAt(i)) || check_depth(i, charAt(i)))) {
 				burnShip(cor, charAt(cor));
-			//	cout << "col has failed me" << endl;
 				return;
 			} else if (flag_row && (check_col(i, charAt(i)) || check_depth(i, charAt(i)))) {
 				burnShip(cor, charAt(cor));
-			//	cout << "row has failed me" << endl;
 				return;
 			} else if (flag_depth && (check_row(i, charAt(i)) || check_col(i, charAt(i)))) {
 				burnShip(cor, charAt(cor));
-				//cout << "depth has failed me" << endl;
 				return;
 			}
 			i.col = i.col + flag_col; i.row = i.row + flag_row; i.depth = i.depth + flag_depth;//advance in right direction	
 		}
 		if (counter == 0) {
-			fillShip = addShip(cor); //ship len is just right and we didn't find any evidence it's illegal
+			fillShip = addShip(cor); //the correct length, with no shape deformeties found
 			return;
 		} else { 
 			burnShip(cor, charAt(cor)); 
-		//	cout << "counter has failed me: " << counter << endl;
 			return; 
-		}//too short or too long
+		}
 	}
 }
 
 
 
-void Board::burnShip(Coordinate i, char ch) {
+void Board::burnShip(Coordinate i, char ch) {//upon finding an illegal ship, we make it disappear from the face of the earth (board)
+											 //works recursively and changes the value, so as not to start a loop
 	valid = false;
-	//if you guys wanna do a logger, than we should log invalid size/shape in scanship when calling this func(shape for inside the while loop and size for counter fail)
 	if (!CoordOnBoard(i)) { return; }
 	if (charAt(i) == ch) { //remove ship so we don't find it when looking for ajancencies. recursively move to neighbors (wierd shaped ships are hard to mold)
 		set(i, ' ');
@@ -499,7 +501,7 @@ void Board::burnShip(Coordinate i, char ch) {
 }
 
 
-int Board::getCounter(Coordinate i){
+int Board::getCounter(Coordinate i){// this function converts the characters of a ship to it's expected length
 	if ((charAt(i) == 'b') || (charAt(i) == 'B')) {
 		return 1;
 	}
@@ -516,7 +518,7 @@ int Board::getCounter(Coordinate i){
 }
 
 
-Ship Board::addShip(Coordinate i) {
+Ship Board::addShip(Coordinate i) {//this function is called after verifying a ship is legal. it constructs the ship and adds it to the board's ship vector
 	vector<Coordinate> result;
 	int counter = getCounter(i);
 	bool col_flag, row_flag, depth_flag;
@@ -541,37 +543,33 @@ Ship Board::addShip(Coordinate i) {
 	}
 	Ship shipToAdd(static_cast<char>(charAt(i)-1), direction);
 	shipToAdd.putInPlace(result);
-	//shipToAdd.print();
 	return shipToAdd;
 }
 
 
-bool Board::check_depth(Coordinate cor, char ch) { //return true iff the neighbors on the depth dimention have the same char
+bool Board::check_depth(Coordinate cor, char ch) { //return true iff the neighbors on the depth dimention have the same char-are part of the same ship
 	Coordinate i = Coordinate(cor.row, cor.col, cor.depth-1);
 	bool flag = false;
 	flag = flag || (charAt(i) == ch);
 	i.depth += 2;
 	flag = flag || (charAt(i) == ch);
-	//cout << "depth: " << flag << endl;
 	return flag;
 }
 
-bool Board::check_row(Coordinate cor, char ch) {//return true iff the neighbors on the row dimention have the same char
+bool Board::check_row(Coordinate cor, char ch) {//return true iff the neighbors on the row dimention have the same char-are part of the same ship
 	Coordinate i = Coordinate(cor.row-1, cor.col, cor.depth);
 	bool flag = false;
 	flag = flag || (charAt(i) == ch);
 	i.row += 2;
 	flag = flag || (charAt(i) == ch);
-	//cout << "row: " << flag << endl;
 	return flag;
 }
-bool Board::check_col(Coordinate cor, char ch) {//return true iff the neighbors on the col dimention have the same char
+bool Board::check_col(Coordinate cor, char ch) {//return true iff the neighbors on the col dimention have the same char-are part of the same ship
 	Coordinate i = Coordinate(cor.row, cor.col-1, cor.depth);
 	bool flag = false;
 	flag = flag || (charAt(i) == ch);
 	i.col += 2;
 	flag = flag || (charAt(i) == ch);
-	//cout << "col: " << flag << endl;
 	return flag;
 }
 
@@ -594,7 +592,7 @@ Cell* Board::cellAt(Coordinate c) {
 	return NULL;
 }
 
-void Board::kaboom(Coordinate loc) {
+void Board::kaboom(Coordinate loc) { //"bombard" a cell, making it impassible for other cells, and changing the heat map values according to the impass it creates
 	Coordinate i = Coordinate(1, 1, 1);
 
 	i.col = loc.col;
@@ -629,9 +627,10 @@ void Board::kaboom(Coordinate loc) {
 	cellAt(loc)->kaboom(ZL,0);
 }
 
-void Board::kaboom(Ship ship) {
+void Board::kaboom(Ship ship) {//this function updates an entire ship and it's immediate serrounding to be impassible, like the previous kaboom but for the whole ship.
 	for (auto &m : ship.location()) {
 		Coordinate temp = m.first;
+		kaboom(m.first);
 		temp.row--;
 		if (CoordOnBoard(temp)) 
 			kaboom(temp);
@@ -656,7 +655,7 @@ void Board::kaboom(Ship ship) {
 	}
 }
 
-void Board::kaboom(vector<Coordinate> kaboomboom) {
+void Board::kaboom(vector<Coordinate> kaboomboom) {//much like the other two kabooms, this function "bombards" the enemy ship, the result of an attack indicates it's destruction
 	for (auto &m : kaboomboom) {
 		Coordinate temp = m;
 		temp.row--;

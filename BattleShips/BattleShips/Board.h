@@ -7,13 +7,11 @@ class Board : public BoardData {
 private:
 	Cell ***board;
 	bool valid = true;
-	//unsafe function. only allows internal excess
-	
 
 public:
-	//Board(Board const &) = delete;
-	Board Board::getSidedBoard(bool sideA);
-	Board(BoardData const &origin);
+	Board getSidedBoard(bool sideA) const ;
+	Coordinate getSize() const;
+	Board(Coordinate size);
 	Board(string filename);
 	Board() {}
 	bool isValid();
@@ -30,6 +28,7 @@ public:
 	void kaboom(vector<Coordinate> kaboomboom);
 	void operator=(Board const &x);
 	void print(bool heat = false);
+	void print() const;
 	void set(Coordinate loc, char type);
 
 	pair<int, int> scan_Board();

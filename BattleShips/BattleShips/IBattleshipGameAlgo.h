@@ -44,6 +44,7 @@ class IBattleshipGameAlgo
 {
 public:
 	virtual ~IBattleshipGameAlgo() = default;
+
 	virtual void setPlayer(int player) = 0;				// called every time the player changes his order
 	virtual void setBoard(const BoardData& board) = 0;	// called once at the beginning of each new game
 	virtual Coordinate attack() = 0;					// ask player for his move

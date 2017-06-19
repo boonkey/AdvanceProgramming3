@@ -13,16 +13,6 @@ DIRECTION Ship::getDirection() {
 	return dir;
 }
 
-
-//void Ship::print() {
-//	if (config.quiet)
-//		return;
-//	cout << "type: " << type << " alive: " << alive << " Side A: " << isSideA() << endl;
-//	for (auto p : position) {
-//		cout << p.first.col << " , " << p.first.row << " , " << p.first.depth << " # status: " << p.second << endl;
-//	}
-//}
-
 //puts a ship in place (position is set to true position on board. initialized to all parts alive
 
 int Ship::putInPlace(vector<Coordinate> location) {
@@ -93,4 +83,28 @@ int Ship::getShipScore() {
 
 vector<pair<Coordinate, bool>> Ship::location() {
 	return position;
+}
+
+vector<Coordinate>::iterator myFind(vector<Coordinate> &lookinThis, Coordinate &value)
+{
+	vector<Coordinate>::iterator it = lookinThis.begin();
+	while (it != lookinThis.end()) {
+		if ((it->row == value.row) && (it->col == value.col) && (it->depth == value.depth)) {
+			return it;
+		}
+		it++;
+	}
+	return lookinThis.end();
+}
+
+vector<enemyShip>::iterator myFind(vector<enemyShip> &lookinThis, enemyShip &value)
+{
+	vector<enemyShip>::iterator it = lookinThis.begin();
+	while (it != lookinThis.end()) {
+		if ((it->initHit.row == value.initHit.row) && (it->initHit.col == value.initHit.col) && (it->initHit.depth == value.initHit.depth)) {
+			return it;
+		}
+		it++;
+	}
+	return lookinThis.end();
 }

@@ -13,7 +13,7 @@ public:
 	int scoreA = 0;
 	int scoreB = 0;
 	//constr
-	Match(string playerAPath, string playerBPath, Board &board);
+	Match(string playerAPath, string playerBPath, Board board);
 	//destr
 	~Match() {}
 	//other functions
@@ -23,6 +23,8 @@ protected:
 	unique_ptr<IBattleshipGameAlgo> playerA;
 	unique_ptr<IBattleshipGameAlgo> playerB;
 	Board matchBoard;
+	Board aMatchBoard;
+	Board bMatchBoard;
 
 	bool initplayer(string dllPath, bool isA, const Board& mainGameBoard);
 	int do_turn(Board &mainGameBoard, int isTurnB);

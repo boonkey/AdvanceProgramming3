@@ -53,7 +53,8 @@ extern struct Configuration config;
 enum DIRECTION {
 	X = 0, // Horizontal
 	Y = 1, // Vectral
-	Z = 2  // Inwards
+	Z = 2, // Inwards
+	UNKNOWN = 3
 };
 
 enum COLOR
@@ -87,3 +88,6 @@ enum HEATMODIFIER {
 	ZM = 7,
 	ZH = 8
 };
+
+
+

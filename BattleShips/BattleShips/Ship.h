@@ -4,6 +4,19 @@
 #include "IBattleshipGameAlgo.h"
 
 
+struct enemyShip {
+	Coordinate initHit = Coordinate(0, 0, 0);
+	vector<Coordinate> confirmedHits;
+	vector<Coordinate> suspects;
+	enum DIRECTION dir = UNKNOWN;
+};
+
+
+vector<Coordinate>::iterator myFind(vector<Coordinate> &lookinThis, Coordinate &value);
+vector<enemyShip>::iterator myFind(vector<enemyShip> &lookinThis, enemyShip &value);
+
+
+
 class Ship {
 	char type;			// ship type (letter) - indicates both size and side
 	vector<pair<Coordinate, bool>> position; //for each position we keep <Coordinate,alive>
